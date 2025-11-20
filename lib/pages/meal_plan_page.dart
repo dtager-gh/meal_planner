@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/week_plan.dart';
+import 'shopping_list_page.dart';
 
 
 class MealPlanPage extends StatelessWidget {
@@ -11,6 +12,16 @@ class MealPlanPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Weekly Meal Plan")),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(context,
+            MaterialPageRoute(
+              builder: (_) => ShoppingListPage(plan: plan),
+            ),
+          );
+        },
+        child: const Icon(Icons.shopping_cart),
+      ),
       body: ListView.builder(
         itemCount: plan.days.length,
         itemBuilder: (context, index) {
