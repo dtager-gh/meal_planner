@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/week_plan.dart';
 import 'shopping_list_page.dart';
+import '../services/shopping_list.dart';
 
 
 class MealPlanPage extends StatelessWidget {
@@ -14,9 +15,13 @@ class MealPlanPage extends StatelessWidget {
       appBar: AppBar(title: const Text("Weekly Meal Plan")),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
+          // Generate shopping list from the current plan
+          final shoppingList = generateShoppingList(plan);
+
+          // Navigate to ShoppingListPage
           Navigator.push(context,
             MaterialPageRoute(
-              builder: (_) => ShoppingListPage(plan: plan),
+              builder: (_) => ShoppingListPage(shoppingList: shoppingList ),
             ),
           );
         },

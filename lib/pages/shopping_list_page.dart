@@ -4,22 +4,20 @@ import '../models/week_plan.dart';
 
 
 class ShoppingListPage extends StatelessWidget {
-  final WeekPlan plan;
-  const ShoppingListPage({super.key, required this.plan});
+  final Map<String, int> shoppingList;
+  const ShoppingListPage({super.key, required this.shoppingList});
 
 
   @override
   Widget build(BuildContext context) {
-    final list = generateShoppingList(plan);
-
-
     return Scaffold(
-      appBar: AppBar(title: const Text("Shopping List")),
+      appBar: AppBar(title: const Text('Shopping List')),
       body: ListView(
-        children: list.entries.map((item) {
+        padding: const EdgeInsets.all(16),
+        children: shoppingList.entries.map((entry) {
           return ListTile(
-            title: Text(item.key),
-            trailing: Text("x${item.value}"),
+            title: Text(entry.key),
+            trailing: Text(entry.value.toString()),
           );
         }).toList(),
       ),
