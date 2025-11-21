@@ -40,10 +40,10 @@ class MealPlanPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Day ${index + 1}", style: const TextStyle(fontSize: 18)),
+                  Text("Day ${index + 1}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
-                  Text("Lunch: ${day.lunch.meat} with ${day.lunch.sides.join(', ')}"),
-                  Text("Dinner: ${day.dinner.meat} with ${day.dinner.sides.join(', ')}"),
+                  Text("Lunch: ${day.lunch.meat} with ${day.lunch.sides.join(', ')}" , style: const TextStyle(fontWeight: FontWeight.bold),),
+                  Text("Dinner: ${day.dinner.meat} with ${day.dinner.sides.join(', ')}" , style: const TextStyle(fontWeight: FontWeight.bold),),
                 ],
               ),
             ),

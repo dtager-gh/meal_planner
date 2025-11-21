@@ -9,8 +9,7 @@ void main() async {
 
 
   await Hive.initFlutter();
-
-
+  await Hive.openBox<String>('mealPlanBox');
   await Hive.openBox<String>('meats');
   await Hive.openBox<String>('veggies');
   await Hive.openBox<String>('salads');
