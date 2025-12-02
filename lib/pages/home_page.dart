@@ -20,6 +20,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   bool hasShoppingList = false;
   WeekPlan? currentPlan;
 
+
+  //These are used to make your buttons shrink slightly when tapped ("button press" animation).
+  // You start the animation on tap down, reverse it on tap up.
   late AnimationController _buttonController;
   late Animation<double> _buttonScale;
 
@@ -67,6 +70,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               const SizedBox(height: 40),
 
               // Generate Meal Plan Button
+              //Create a new 7-day plan.
+              // Save it in memory (currentPlan).
+              // Save it to Hive so it loads again next time the app opens
               _buildButton(
                 icon: Icons.restaurant_menu,
                 label: 'Generate 7-Day Meal Plan',
@@ -82,6 +88,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               ),
 
               // Go to Meal Plan Button
+              //Button only works if a plan exists.
+              // Opens the page showing the week’s meals.
               _buildButton(
                 icon: Icons.fastfood,
                 label: 'Meal Plan',
@@ -100,6 +108,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               ),
 
               // Add New Foods Button
+              //Takes you to your EditFoodPage so you can add meats/veggies stored in Hive.
               _buildButton(
                 icon: Icons.add,
                 label: 'Add New Meats / Veggies',
@@ -113,6 +122,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               ),
 
               // Reset Button
+              //Deletes the saved plan.
+              // Removes the shopping list badge.
+              // Makes the Meal Plan button disabled again.
               _buildButton(
                 icon: Icons.clear,
                 label: 'Clear / Reset List',
@@ -131,11 +143,14 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         ),
       ),
 
-      // Shopping cart FAB
+      //Show the FAB only if a meal plan exists
       floatingActionButton: hasShoppingList
           ? FloatingActionButton(
         onPressed: () {
+          // Create a shopping list from the current saved meal plan
           final shoppingList = generateShoppingList(currentPlan!);
+
+          // Navigate to the Shopping List page and show it
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -143,20 +158,32 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             ),
           );
         },
+
+        // The icon and badge inside the FAB
         child: Stack(
           alignment: Alignment.center,
           children: [
+
+            // The cart icon itself
             const Icon(Icons.shopping_cart),
+
+            // The little red number bubble at the top right
             Positioned(
               right: 0,
               top: 0,
               child: Container(
                 padding: const EdgeInsets.all(2),
+
+                // Red circle background for the badge
                 decoration: BoxDecoration(
                   color: Colors.red,
                   borderRadius: BorderRadius.circular(10),
                 ),
+
+                // Minimum size for the badge
                 constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+
+                // The number displayed in the bubble (how many items)
                 child: Text(
                   '${generateShoppingList(currentPlan!).length}',
                   style: const TextStyle(color: Colors.white, fontSize: 10),
@@ -167,7 +194,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           ],
         ),
       )
-          : null,
+          : null,// If no plan exists, hide the FAB
     );
   }
 
