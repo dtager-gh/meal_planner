@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'meal_plan_page.dart';
 import 'edit_food_page.dart';
@@ -20,9 +19,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   bool hasShoppingList = false;
   WeekPlan? currentPlan;
 
-
-  //These are used to make your buttons shrink slightly when tapped ("button press" animation).
-  // You start the animation on tap down, reverse it on tap up.
   late AnimationController _buttonController;
   late Animation<double> _buttonScale;
 
@@ -30,7 +26,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   void initState() {
     super.initState();
 
-    // Load saved plan if exists
     var box = Hive.box<String>('mealPlanBox');
     if (box.containsKey('currentPlan')) {
       currentPlan = WeekPlan.fromJson(jsonDecode(box.get('currentPlan')!));
@@ -56,101 +51,264 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text("Meal Planner"),
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-
-              // Header image
-              Image.asset('assets/meal.jpg', height: 150),
-              const SizedBox(height: 40),
-
-              // Generate Meal Plan Button
-              //Create a new 7-day plan.
-              // Save it in memory (currentPlan).
-              // Save it to Hive so it loads again next time the app opens
-              _buildButton(
-                icon: Icons.restaurant_menu,
-                label: 'Generate 7-Day Meal Plan',
-                gradient: const LinearGradient(colors: [Colors.orangeAccent, Colors.deepOrange]),
-                onTap: () {
-                  final plan = generateWeekPlan();
-                  setState(() {
-                    currentPlan = plan;
-                    hasShoppingList = true;
-                  });
-                  Hive.box<String>('mealPlanBox').put('currentPlan', jsonEncode(plan.toJson()));
-                },
-              ),
-
-              // Go to Meal Plan Button
-              //Button only works if a plan exists.
-              // Opens the page showing the week’s meals.
-              _buildButton(
-                icon: Icons.fastfood,
-                label: 'Meal Plan',
-                gradient: currentPlan != null
-                    ? const LinearGradient(colors: [Colors.redAccent, Colors.orangeAccent])
-                    : const LinearGradient(colors: [Colors.grey, Colors.grey]),
-                onTap: currentPlan != null
-                    ? () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => MealPlanPage(plan: currentPlan!)),
-                  );
-                }
-                    : null,
-                disabled: currentPlan == null,
-              ),
-
-              // Add New Foods Button
-              //Takes you to your EditFoodPage so you can add meats/veggies stored in Hive.
-              _buildButton(
-                icon: Icons.add,
-                label: 'Add New Meats / Veggies',
-                gradient: const LinearGradient(colors: [Colors.green, Colors.greenAccent]),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const EditFoodPage()),
-                  );
-                },
-              ),
-
-              // Reset Button
-              //Deletes the saved plan.
-              // Removes the shopping list badge.
-              // Makes the Meal Plan button disabled again.
-              _buildButton(
-                icon: Icons.clear,
-                label: 'Clear / Reset List',
-                gradient: const LinearGradient(colors: [Colors.green, Colors.greenAccent]),
-                onTap: () async {
-                  var box = Hive.box<String>('mealPlanBox');
-                  await box.clear();
-                  setState(() {
-                    currentPlan = null;
-                    hasShoppingList = false;
-                  });
-                },
-              ),
-            ],
+        title: const Text(
+          "Meal Planner",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 24,
           ),
         ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+      ),
+      body: Stack(
+        children: [
+          // Background image
+          Container(
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/meal.jpg'),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+
+          // Gradient overlay for better readability
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withOpacity(0.6),
+                  Colors.black.withOpacity(0.3),
+                  Colors.black.withOpacity(0.6),
+                ],
+              ),
+            ),
+          ),
+
+          // Content
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const SizedBox(height: 20),
+
+                      // Hero section with icon and title
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.3),
+                            width: 2,
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: Colors.orangeAccent.withOpacity(0.3),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.restaurant_menu,
+                                size: 60,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 15),
+                            const Text(
+                              'Weekly Meal Planner',
+                              style: TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                letterSpacing: 1.2,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Plan your week, shop smarter',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.white.withOpacity(0.9),
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 40),
+
+                      // Status card (shows if plan exists)
+                      if (currentPlan != null)
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          margin: const EdgeInsets.only(bottom: 20),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(
+                              color: Colors.greenAccent.withOpacity(0.5),
+                              width: 2,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.check_circle,
+                                color: Colors.greenAccent,
+                                size: 28,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Active Meal Plan',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      '7 days of meals ready',
+                                      style: TextStyle(
+                                        color: Colors.white.withOpacity(0.8),
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                      // Main action button (larger, more prominent)
+                      _buildPrimaryButton(
+                        icon: Icons.auto_awesome,
+                        label: 'Generate New Plan',
+                        gradient: const LinearGradient(
+                          colors: [Colors.orangeAccent, Colors.deepOrange],
+                        ),
+                        onTap: () {
+                          final plan = generateWeekPlan();
+                          setState(() {
+                            currentPlan = plan;
+                            hasShoppingList = true;
+                          });
+                          Hive.box<String>('mealPlanBox').put('currentPlan', jsonEncode(plan.toJson()));
+                        },
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // Secondary buttons in a grid
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildCompactButton(
+                              icon: Icons.calendar_today,
+                              label: 'View Plan',
+                              gradient: currentPlan != null
+                                  ? const LinearGradient(colors: [Colors.blue, Colors.blueAccent])
+                                  : const LinearGradient(colors: [Colors.grey, Colors.grey]),
+                              onTap: currentPlan != null
+                                  ? () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => MealPlanPage(plan: currentPlan!)),
+                                );
+                              }
+                                  : null,
+                              disabled: currentPlan == null,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildCompactButton(
+                              icon: Icons.add_circle,
+                              label: 'Add Foods',
+                              gradient: const LinearGradient(colors: [Colors.green, Colors.greenAccent]),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => const EditFoodPage()),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // Reset button (less prominent)
+                      _buildTextButton(
+                        icon: Icons.refresh,
+                        label: 'Reset Everything',
+                        onTap: () async {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Reset Meal Plan?'),
+                              content: const Text('This will clear your current meal plan and shopping list.'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: const Text('Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed: () async {
+                                    var box = Hive.box<String>('mealPlanBox');
+                                    await box.clear();
+                                    setState(() {
+                                      currentPlan = null;
+                                      hasShoppingList = false;
+                                    });
+                                    Navigator.pop(context);
+                                  },
+                                  child: const Text(
+                                    'Reset',
+                                    style: TextStyle(color: Colors.red),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+
+                      const SizedBox(height: 40),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
 
-      //Show the FAB only if a meal plan exists
       floatingActionButton: hasShoppingList
-          ? FloatingActionButton(
+          ? FloatingActionButton.extended(
         onPressed: () {
-          // Create a shopping list from the current saved meal plan
           final shoppingList = generateShoppingList(currentPlan!);
-
-          // Navigate to the Shopping List page and show it
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -158,47 +316,40 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             ),
           );
         },
-
-        // The icon and badge inside the FAB
-        child: Stack(
-          alignment: Alignment.center,
+        icon: Stack(
+          clipBehavior: Clip.none,
           children: [
-
-            // The cart icon itself
             const Icon(Icons.shopping_cart),
-
-            // The little red number bubble at the top right
             Positioned(
-              right: 0,
-              top: 0,
+              right: -8,
+              top: -8,
               child: Container(
-                padding: const EdgeInsets.all(2),
-
-                // Red circle background for the badge
+                padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
                   color: Colors.red,
                   borderRadius: BorderRadius.circular(10),
                 ),
-
-                // Minimum size for the badge
-                constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-
-                // The number displayed in the bubble (how many items)
+                constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
                 child: Text(
                   '${generateShoppingList(currentPlan!).length}',
-                  style: const TextStyle(color: Colors.white, fontSize: 10),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),
             ),
           ],
         ),
+        label: const Text('Shopping List'),
       )
-          : null,// If no plan exists, hide the FAB
+          : null,
     );
   }
 
-  Widget _buildButton({
+  Widget _buildPrimaryButton({
     required IconData icon,
     required String label,
     required LinearGradient gradient,
@@ -216,35 +367,99 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           child: child,
         ),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 60),
-          margin: const EdgeInsets.symmetric(vertical: 10),
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 20),
           decoration: BoxDecoration(
             gradient: gradient,
-            borderRadius: BorderRadius.circular(30),
+            borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: (disabled ? Colors.grey : gradient.colors.last).withOpacity(0.5),
-                offset: const Offset(0, 5),
-                blurRadius: 10,
+                color: gradient.colors.last.withOpacity(0.4),
+                offset: const Offset(0, 8),
+                blurRadius: 20,
               ),
             ],
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
+          child: Column(
             children: [
-              Icon(icon, color: Colors.white, size: 28),
-              const SizedBox(width: 10),
+              Icon(icon, color: Colors.white, size: 36),
+              const SizedBox(height: 8),
               Text(
                 label,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: disabled ? Colors.black38 : Colors.white,
+                  color: Colors.white,
+                  letterSpacing: 0.5,
                 ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildCompactButton({
+    required IconData icon,
+    required String label,
+    required LinearGradient gradient,
+    required VoidCallback? onTap,
+    bool disabled = false,
+  }) {
+    return GestureDetector(
+      onTap: disabled ? null : onTap,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: gradient,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: disabled
+              ? []
+              : [
+            BoxShadow(
+              color: gradient.colors.last.withOpacity(0.3),
+              offset: const Offset(0, 4),
+              blurRadius: 10,
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: Colors.white, size: 32),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: disabled ? Colors.black38 : Colors.white,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return TextButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon, color: Colors.white70, size: 20),
+      label: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white70,
+          fontSize: 16,
+        ),
+      ),
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       ),
     );
   }
