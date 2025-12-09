@@ -92,211 +92,216 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           ),
 
           // Content
-          SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(height: 20),
-
-                      // Hero section with icon and title
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.3),
-                            width: 2,
-                          ),
-                        ),
-                        child: Column(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(20),
-                              decoration: BoxDecoration(
-                                color: Colors.orangeAccent.withOpacity(0.3),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.restaurant_menu,
-                                size: 60,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(height: 15),
-                            const Text(
-                              'Weekly Meal Planner',
-                              style: TextStyle(
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                letterSpacing: 1.2,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Plan your week, shop smarter',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.white.withOpacity(0.9),
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 40),
-
-                      // Status card (shows if plan exists)
-                      if (currentPlan != null)
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          margin: const EdgeInsets.only(bottom: 20),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(15),
-                            border: Border.all(
-                              color: Colors.greenAccent.withOpacity(0.5),
-                              width: 2,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.check_circle,
-                                color: Colors.greenAccent,
-                                size: 28,
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Active Meal Plan',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    Text(
-                                      '7 days of meals ready',
-                                      style: TextStyle(
-                                        color: Colors.white.withOpacity(0.8),
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                      // Main action button (larger, more prominent)
-                      _buildPrimaryButton(
-                        icon: Icons.auto_awesome,
-                        label: 'Generate New Plan',
-                        gradient: const LinearGradient(
-                          colors: [Colors.orangeAccent, Colors.deepOrange],
-                        ),
-                        onTap: () {
-                          final plan = generateWeekPlan();
-                          setState(() {
-                            currentPlan = plan;
-                            hasShoppingList = true;
-                          });
-                          Hive.box<String>('mealPlanBox').put('currentPlan', jsonEncode(plan.toJson()));
-                        },
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // Secondary buttons in a grid
-                      Row(
+          Center(
+            child: Container(
+              constraints: BoxConstraints(maxWidth: 600),
+              child: SafeArea(
+                child: Center(
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Expanded(
-                            child: _buildCompactButton(
-                              icon: Icons.calendar_today,
-                              label: 'View Plan',
-                              gradient: currentPlan != null
-                                  ? const LinearGradient(colors: [Colors.blue, Colors.blueAccent])
-                                  : const LinearGradient(colors: [Colors.grey, Colors.grey]),
-                              onTap: currentPlan != null
-                                  ? () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (_) => MealPlanPage(plan: currentPlan!)),
-                                );
-                              }
-                                  : null,
-                              disabled: currentPlan == null,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildCompactButton(
-                              icon: Icons.add_circle,
-                              label: 'Add Foods',
-                              gradient: const LinearGradient(colors: [Colors.green, Colors.greenAccent]),
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (_) => const EditFoodPage()),
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
+                          const SizedBox(height: 20),
 
-                      const SizedBox(height: 12),
-
-                      // Reset button (less prominent)
-                      _buildTextButton(
-                        icon: Icons.refresh,
-                        label: 'Reset Everything',
-                        onTap: () async {
-                          showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Text('Reset Meal Plan?'),
-                              content: const Text('This will clear your current meal plan and shopping list.'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: const Text('Cancel'),
+                          // Hero section with icon and title
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.3),
+                                width: 2,
+                              ),
+                            ),
+                            child: Column(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(20),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orangeAccent.withOpacity(0.3),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.restaurant_menu,
+                                    size: 60,
+                                    color: Colors.white,
+                                  ),
                                 ),
-                                TextButton(
-                                  onPressed: () async {
-                                    var box = Hive.box<String>('mealPlanBox');
-                                    await box.clear();
-                                    setState(() {
-                                      currentPlan = null;
-                                      hasShoppingList = false;
-                                    });
-                                    Navigator.pop(context);
-                                  },
-                                  child: const Text(
-                                    'Reset',
-                                    style: TextStyle(color: Colors.red),
+                                const SizedBox(height: 15),
+                                const Text(
+                                  'Weekly Meal Planner',
+                                  style: TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    letterSpacing: 1.2,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Plan your week, shop smarter',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.white.withOpacity(0.9),
+                                    fontStyle: FontStyle.italic,
                                   ),
                                 ),
                               ],
                             ),
-                          );
-                        },
-                      ),
+                          ),
 
-                      const SizedBox(height: 40),
-                    ],
+                          const SizedBox(height: 40),
+
+                          // Status card (shows if plan exists)
+                          if (currentPlan != null)
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              margin: const EdgeInsets.only(bottom: 20),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(15),
+                                border: Border.all(
+                                  color: Colors.greenAccent.withOpacity(0.5),
+                                  width: 2,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.check_circle,
+                                    color: Colors.greenAccent,
+                                    size: 28,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Active Meal Plan',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        Text(
+                                          '7 days of meals ready',
+                                          style: TextStyle(
+                                            color: Colors.white.withOpacity(0.8),
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                          // Main action button (larger, more prominent)
+                          _buildPrimaryButton(
+                            icon: Icons.auto_awesome,
+                            label: 'Generate New Plan',
+                            gradient: const LinearGradient(
+                              colors: [Colors.orangeAccent, Colors.deepOrange],
+                            ),
+                            onTap: () {
+                              final plan = generateWeekPlan();
+                              setState(() {
+                                currentPlan = plan;
+                                hasShoppingList = true;
+                              });
+                              Hive.box<String>('mealPlanBox').put('currentPlan', jsonEncode(plan.toJson()));
+                            },
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          // Secondary buttons in a grid
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildCompactButton(
+                                  icon: Icons.calendar_today,
+                                  label: 'View Plan',
+                                  gradient: currentPlan != null
+                                      ? const LinearGradient(colors: [Colors.blue, Colors.blueAccent])
+                                      : const LinearGradient(colors: [Colors.grey, Colors.grey]),
+                                  onTap: currentPlan != null
+                                      ? () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (_) => MealPlanPage(plan: currentPlan!)),
+                                    );
+                                  }
+                                      : null,
+                                  disabled: currentPlan == null,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildCompactButton(
+                                  icon: Icons.add_circle,
+                                  label: 'Add Foods',
+                                  gradient: const LinearGradient(colors: [Colors.green, Colors.greenAccent]),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (_) => const EditFoodPage()),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          // Reset button (less prominent)
+                          _buildTextButton(
+                            icon: Icons.refresh,
+                            label: 'Reset Everything',
+                            onTap: () async {
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text('Reset Meal Plan?'),
+                                  content: const Text('This will clear your current meal plan and shopping list.'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () async {
+                                        var box = Hive.box<String>('mealPlanBox');
+                                        await box.clear();
+                                        setState(() {
+                                          currentPlan = null;
+                                          hasShoppingList = false;
+                                        });
+                                        Navigator.pop(context);
+                                      },
+                                      child: const Text(
+                                        'Reset',
+                                        style: TextStyle(color: Colors.red),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+
+                          const SizedBox(height: 40),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),

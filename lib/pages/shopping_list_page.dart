@@ -38,28 +38,33 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
 
       //Creates a scrollable list.
       //It loops through every item in the shopping list map.
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: widget.shoppingList.entries.map((entry) {
+      body: Center(
+        child: Container(
+          constraints: BoxConstraints(maxWidth: 600),
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: widget.shoppingList.entries.map((entry) {
 
 
-          //Item name (bold)
-          // Quantity shown under it
-          // A checkbox
-          // When the user taps the checkbox
-          // It updates _purchased[entry.key]
-          // The screen refreshes with setState(() {})
-          return CheckboxListTile(
-            title: Text(entry.key, style: const TextStyle(fontWeight: FontWeight.bold),),
-            subtitle: Text('Quantity: ${entry.value}', style: const TextStyle(fontWeight: FontWeight.bold), ),
-            value: _purchased[entry.key],
-            onChanged: (bool? value) {
-              setState(() {
-                _purchased[entry.key] = value ?? false;
-              });
-            },
-          );
-        }).toList(),
+              //Item name (bold)
+              // Quantity shown under it
+              // A checkbox
+              // When the user taps the checkbox
+              // It updates _purchased[entry.key]
+              // The screen refreshes with setState(() {})
+              return CheckboxListTile(
+                title: Text(entry.key, style: const TextStyle(fontWeight: FontWeight.bold),),
+                subtitle: Text('Quantity: ${entry.value}', style: const TextStyle(fontWeight: FontWeight.bold), ),
+                value: _purchased[entry.key],
+                onChanged: (bool? value) {
+                  setState(() {
+                    _purchased[entry.key] = value ?? false;
+                  });
+                },
+              );
+            }).toList(),
+          ),
+        ),
       ),
     );
   }
