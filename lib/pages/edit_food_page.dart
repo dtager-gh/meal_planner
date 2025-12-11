@@ -95,92 +95,97 @@ class _EditFoodPageState extends State<EditFoodPage> {
 
     return Scaffold(
       appBar: AppBar(title: const Text("Manage Food Items")),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: [
+      body: Center(
+        child: Container(
+          constraints: BoxConstraints(maxWidth: 600),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              children: [
 
-            // Dropdown for selecting category
-            DropdownButton<String>(
-              value: category,
-              items: const [
-                DropdownMenuItem(value: 'Meat', child: Text('Meat')),
-                DropdownMenuItem(value: 'Vegetable', child: Text('Vegetable')),
-                DropdownMenuItem(value: 'Salad', child: Text('Salad')),
-              ],
-              onChanged: (value) {
-                setState(() => category = value!);
-              },
-            ),
+                // Dropdown for selecting category
+                DropdownButton<String>(
+                  value: category,
+                  items: const [
+                    DropdownMenuItem(value: 'Meat', child: Text('Meat')),
+                    DropdownMenuItem(value: 'Vegetable', child: Text('Vegetable')),
+                    DropdownMenuItem(value: 'Salad', child: Text('Salad')),
+                  ],
+                  onChanged: (value) {
+                    setState(() => category = value!);
+                  },
+                ),
 
-            // Input for adding new food item
-            TextField(
-              controller: controller,
-              decoration: const InputDecoration(
-                labelText: 'Enter food name',
-                border: OutlineInputBorder(),
-              ),
-            ),
+                // Input for adding new food item
+                TextField(
+                  controller: controller,
+                  decoration: const InputDecoration(
+                    labelText: 'Enter food name',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
 
-            const SizedBox(height: 10),
+                const SizedBox(height: 10),
 
-            // Add button
-            ElevatedButton(
-              onPressed: addItem,
-              child: const Text("Add"),
-            ),
-
-
-            const SizedBox(height: 20),
-            const Divider(),
+                // Add button
+                ElevatedButton(
+                  onPressed: addItem,
+                  child: const Text("Add"),
+                ),
 
 
-            // Title above the list
-            Text(
-              "$category List",
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
+                const SizedBox(height: 20),
+                const Divider(),
 
-            const SizedBox(height: 10),
 
-            // List of items (auto-updates because of ValueListenableBuilder)
-            Expanded(
-              child: ValueListenableBuilder(
-                valueListenable: box.listenable(),
-                builder: (context, Box<String> b, _) {
-                  return ListView.builder(
-                    itemCount: b.length,
-                    itemBuilder: (context, index) {
-                      final item = b.getAt(index) ?? '';
+                // Title above the list
+                Text(
+                  "$category List",
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
 
-                      return ListTile(
-                        title: Text(item),
+                const SizedBox(height: 10),
 
-                        // Edit + Delete buttons
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
+                // List of items (auto-updates because of ValueListenableBuilder)
+                Expanded(
+                  child: ValueListenableBuilder(
+                    valueListenable: box.listenable(),
+                    builder: (context, Box<String> b, _) {
+                      return ListView.builder(
+                        itemCount: b.length,
+                        itemBuilder: (context, index) {
+                          final item = b.getAt(index) ?? '';
 
-                            // Edit button
-                            IconButton(
-                              icon: const Icon(Icons.edit),
-                              onPressed: () => editItem(b, index, item),
+                          return ListTile(
+                            title: Text(item),
+
+                            // Edit + Delete buttons
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+
+                                // Edit button
+                                IconButton(
+                                  icon: const Icon(Icons.edit),
+                                  onPressed: () => editItem(b, index, item),
+                                ),
+
+                                // Delete button
+                                IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.red),
+                                  onPressed: () => deleteItem(b, index),
+                                ),
+                              ],
                             ),
-
-                            // Delete button
-                            IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () => deleteItem(b, index),
-                            ),
-                          ],
-                        ),
+                          );
+                        },
                       );
                     },
-                  );
-                },
-              ),
-            )
-          ],
+                  ),
+                )
+              ],
+            ),
+          ),
         ),
       ),
     );

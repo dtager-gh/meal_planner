@@ -46,197 +46,202 @@ class MealPlanPage extends StatelessWidget {
           ),
         ),
 
-        child: SafeArea(
-          child: Column(
-            children: [
+        child: Center(
+          child: Container(
+            constraints: BoxConstraints(maxWidth: 600),
+            child: SafeArea(
+              child: Column(
+                children: [
 
-              // HEADER SECTION
+                  // HEADER SECTION
 
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
 
-                  // Semi-transparent card over the gradient
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.3),
-                      width: 2,
-                    ),
-                  ),
-
-                  child: Row(
-                    children: [
-                      // Calendar icon box
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.3),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.calendar_today,
-                          color: Colors.white,
-                          size: 28,
-                        ),
-                      ),
-
-                      const SizedBox(width: 16),
-
-                      // Text inside header
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              '7-Day Meal Plan',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-
-                            // Automatically calculates meal count
-                            Text(
-                              '${plan.days.length * 2} delicious meals planned',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.9),
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // LIST OF DAYS
-
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: plan.days.length, // Always 7
-                  itemBuilder: (context, index) {
-                    final day = plan.days[index];
-
-                    // Day names for display
-                    final dayNames = [
-                      'Monday', 'Tuesday', 'Wednesday',
-                      'Thursday', 'Friday', 'Saturday', 'Sunday'
-                    ];
-
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 16),
-
-                      // White rounded card background for each day
+                      // Semi-transparent card over the gradient
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            offset: const Offset(0, 4),
-                            blurRadius: 12,
-                          ),
-                        ],
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.3),
+                          width: 2,
+                        ),
                       ),
 
-                      child: Column(
+                      child: Row(
                         children: [
-
-                          // DAY HEADER (Orange gradient)
-
+                          // Calendar icon box
                           Container(
-                            padding: const EdgeInsets.all(16),
+                            padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.orange.shade300,
-                                  Colors.deepOrange.shade400,
-                                ],
-                              ),
-                              borderRadius: const BorderRadius.only(
-                                topLeft: Radius.circular(20),
-                                topRight: Radius.circular(20),
-                              ),
+                              color: Colors.white.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(12),
                             ),
+                            child: const Icon(
+                              Icons.calendar_today,
+                              color: Colors.white,
+                              size: 28,
+                            ),
+                          ),
 
-                            child: Row(
+                          const SizedBox(width: 16),
+
+                          // Text inside header
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Number badge
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.3),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Text(
-                                    '${index + 1}',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-
-                                const SizedBox(width: 12),
-
-                                // Day name label
-                                Text(
-                                  dayNames[index % 7],
-                                  style: const TextStyle(
+                                const Text(
+                                  '7-Day Meal Plan',
+                                  style: TextStyle(
                                     color: Colors.white,
-                                    fontSize: 20,
+                                    fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                              ],
-                            ),
-                          ),
 
-                          // LUNCH + DINNER SECTION
-
-                          Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              children: [
-                                // LUNCH
-                                _buildMealSection(
-                                  icon: Icons.wb_sunny,
-                                  iconColor: Colors.amber.shade600,
-                                  title: 'Lunch',
-                                  meat: day.lunch.meat,
-                                  sides: day.lunch.sides,
-                                ),
-
-                                const SizedBox(height: 16),
-                                Divider(color: Colors.grey.shade300),
-                                const SizedBox(height: 16),
-
-                                // DINNER
-                                _buildMealSection(
-                                  icon: Icons.nightlight_round,
-                                  iconColor: Colors.indigo.shade400,
-                                  title: 'Dinner',
-                                  meat: day.dinner.meat,
-                                  sides: day.dinner.sides,
+                                // Automatically calculates meal count
+                                Text(
+                                  '${plan.days.length * 2} delicious meals planned',
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.9),
+                                    fontSize: 14,
+                                  ),
                                 ),
                               ],
                             ),
                           ),
                         ],
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  ),
+
+                  // LIST OF DAYS
+
+                  Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: plan.days.length, // Always 7
+                      itemBuilder: (context, index) {
+                        final day = plan.days[index];
+
+                        // Day names for display
+                        final dayNames = [
+                          'Monday', 'Tuesday', 'Wednesday',
+                          'Thursday', 'Friday', 'Saturday', 'Sunday'
+                        ];
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+
+                          // White rounded card background for each day
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                offset: const Offset(0, 4),
+                                blurRadius: 12,
+                              ),
+                            ],
+                          ),
+
+                          child: Column(
+                            children: [
+
+                              // DAY HEADER (Orange gradient)
+
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Colors.orange.shade300,
+                                      Colors.deepOrange.shade400,
+                                    ],
+                                  ),
+                                  borderRadius: const BorderRadius.only(
+                                    topLeft: Radius.circular(20),
+                                    topRight: Radius.circular(20),
+                                  ),
+                                ),
+
+                                child: Row(
+                                  children: [
+                                    // Number badge
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.3),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Text(
+                                        '${index + 1}',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+
+                                    const SizedBox(width: 12),
+
+                                    // Day name label
+                                    Text(
+                                      dayNames[index % 7],
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              // LUNCH + DINNER SECTION
+
+                              Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  children: [
+                                    // LUNCH
+                                    _buildMealSection(
+                                      icon: Icons.wb_sunny,
+                                      iconColor: Colors.amber.shade600,
+                                      title: 'Lunch',
+                                      meat: day.lunch.meat,
+                                      sides: day.lunch.sides,
+                                    ),
+
+                                    const SizedBox(height: 16),
+                                    Divider(color: Colors.grey.shade300),
+                                    const SizedBox(height: 16),
+
+                                    // DINNER
+                                    _buildMealSection(
+                                      icon: Icons.nightlight_round,
+                                      iconColor: Colors.indigo.shade400,
+                                      title: 'Dinner',
+                                      meat: day.dinner.meat,
+                                      sides: day.dinner.sides,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
