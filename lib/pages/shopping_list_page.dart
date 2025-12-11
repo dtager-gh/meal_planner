@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../services/shopping_list.dart';
 import '../models/week_plan.dart';
+import '../services/kroger_api_service.dart';
+import '../pages/kroger_integration_page.dart';
+import '../config/kroger_config.dart';
 
 
 //This screen expects a shopping list sent into it.
@@ -30,36 +33,115 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
   }
 
 
+  // NEW: Navigate to Kroger integration
+  void _openKrogerIntegration() {
+    if (widget.shoppingList.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Shopping list is empty')),
+      );
+      return;
+    }
+
+    // Convert your Map<String, int> to List<String> for Kroger
+    final ingredients = widget.shoppingList.keys.toList();
+
+    // Initialize Kroger service
+    final krogerApi = KrogerApiService(
+      clientId: KrogerConfig.clientId,
+      clientSecret: KrogerConfig.clientSecret,
+      redirectUri: KrogerConfig.redirectUri,
+    );
+
+    // Navigate to Kroger page
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => KrogerIntegrationPage(
+          krogerService: krogerApi,
+          ingredients: ingredients,
+        ),
+      ),
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Shopping List')),//AppBar with title: “Shopping List”
+      appBar: AppBar(
+        title: const Text('Shopping List'),
+        //AppBar with title: "Shopping List"
+      ),
 
-      //Creates a scrollable list.
-      //It loops through every item in the shopping list map.
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: widget.shoppingList.entries.map((entry) {
+      body: Column(
+        children: [
+          //Creates a scrollable list.
+          //It loops through every item in the shopping list map.
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: widget.shoppingList.entries.map((entry) {
+                //Item name (bold)
+                // Quantity shown under it
+                // A checkbox
+                // When the user taps the checkbox
+                // It updates _purchased[entry.key]
+                // The screen refreshes with setState(() {})
+                return CheckboxListTile(
+                  title: Text(
+                    entry.key,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                    'Quantity: ${entry.value}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  value: _purchased[entry.key],
+                  onChanged: (bool? value) {
+                    setState(() {
+                      _purchased[entry.key] = value ?? false;
+                    });
+                  },
+                );
+              }).toList(),
+            ),
+          ),
 
-
-          //Item name (bold)
-          // Quantity shown under it
-          // A checkbox
-          // When the user taps the checkbox
-          // It updates _purchased[entry.key]
-          // The screen refreshes with setState(() {})
-          return CheckboxListTile(
-            title: Text(entry.key, style: const TextStyle(fontWeight: FontWeight.bold),),
-            subtitle: Text('Quantity: ${entry.value}', style: const TextStyle(fontWeight: FontWeight.bold), ),
-            value: _purchased[entry.key],
-            onChanged: (bool? value) {
-              setState(() {
-                _purchased[entry.key] = value ?? false;
-              });
-            },
-          );
-        }).toList(),
+          // NEW: Kroger button at the bottom
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.2),
+                  spreadRadius: 1,
+                  blurRadius: 5,
+                  offset: const Offset(0, -3),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.shopping_cart),
+                  label: const Text('Add to Kroger Cart'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue[700],
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    textStyle: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  onPressed: widget.shoppingList.isEmpty ? null : _openKrogerIntegration,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
