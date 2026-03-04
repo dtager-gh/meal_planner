@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import '../services/shopping_list.dart';
-import '../models/week_plan.dart';
 import '../services/kroger_api_service.dart';
 import '../pages/kroger_integration_page.dart';
 import '../config/kroger_config.dart';
@@ -70,45 +68,40 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Shopping List'),
-        //AppBar with title: "Shopping List"
       ),
-
-<<<<<<< HEAD
       body: Column(
         children: [
-          //Creates a scrollable list.
-          //It loops through every item in the shopping list map.
+          // Scrollable list of shopping items
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: widget.shoppingList.entries.map((entry) {
-                //Item name (bold)
-                // Quantity shown under it
-                // A checkbox
-                // When the user taps the checkbox
-                // It updates _purchased[entry.key]
-                // The screen refreshes with setState(() {})
-                return CheckboxListTile(
-                  title: Text(
-                    entry.key,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Text(
-                    'Quantity: ${entry.value}',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  value: _purchased[entry.key],
-                  onChanged: (bool? value) {
-                    setState(() {
-                      _purchased[entry.key] = value ?? false;
-                    });
-                  },
-                );
-              }).toList(),
+            child: Center(
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: widget.shoppingList.entries.map((entry) {
+                    return CheckboxListTile(
+                      title: Text(
+                        entry.key,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Text(
+                        'Quantity: ${entry.value}',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      value: _purchased[entry.key],
+                      onChanged: (bool? value) {
+                        setState(() {
+                          _purchased[entry.key] = value ?? false;
+                        });
+                      },
+                    );
+                  }).toList(),
+                ),
+              ),
             ),
           ),
 
-          // NEW: Kroger button at the bottom
+          // Kroger button at the bottom
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -143,37 +136,6 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
             ),
           ),
         ],
-=======
-      //Creates a scrollable list.
-      //It loops through every item in the shopping list map.
-      body: Center(
-        child: Container(
-          constraints: BoxConstraints(maxWidth: 600),
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: widget.shoppingList.entries.map((entry) {
-
-
-              //Item name (bold)
-              // Quantity shown under it
-              // A checkbox
-              // When the user taps the checkbox
-              // It updates _purchased[entry.key]
-              // The screen refreshes with setState(() {})
-              return CheckboxListTile(
-                title: Text(entry.key, style: const TextStyle(fontWeight: FontWeight.bold),),
-                subtitle: Text('Quantity: ${entry.value}', style: const TextStyle(fontWeight: FontWeight.bold), ),
-                value: _purchased[entry.key],
-                onChanged: (bool? value) {
-                  setState(() {
-                    _purchased[entry.key] = value ?? false;
-                  });
-                },
-              );
-            }).toList(),
-          ),
-        ),
->>>>>>> a38dbeac0bc6dacf4b73dde243a2e2f7c12eab22
       ),
     );
   }

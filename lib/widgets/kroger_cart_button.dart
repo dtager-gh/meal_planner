@@ -10,9 +10,9 @@ class KrogerCartButton extends StatelessWidget {
   final List<String> shoppingListItems;
 
   const KrogerCartButton({
-    Key? key,
+    super.key,
     required this.shoppingListItems,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

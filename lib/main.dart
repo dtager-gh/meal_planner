@@ -1,11 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'pages/home_page.dart';
+import 'pages/login_page.dart';
 import 'services/hive_loader.dart';
+import 'package:provider/provider.dart';
+import 'services/auth_service.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'pages/auth_gate.dart';
 
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   // Start Hive (your local storage system).
   await Hive.initFlutter();
@@ -19,8 +29,14 @@ void main() async {
   // Add default foods to Hive the FIRST time the app runs.
   await loadDefaultFoods();
 
+  // Initialize AuthService and load any persisted token
+  final authService = AuthService();
+  await authService.init();
 
-  runApp(const MealPlannerApp());
+  runApp(ChangeNotifierProvider.value(
+    value: authService,
+    child: const MealPlannerApp(),
+  ));
 }
 
 
@@ -33,7 +49,7 @@ class MealPlannerApp extends StatelessWidget {
     return MaterialApp(
       title: 'Meal Planner',
       debugShowCheckedModeBanner: false,
-      home: const HomePage(),//This means the first screen the user sees is HomePage().
+        home: const AuthGate(),//This means the first screen the user sees is HomePage().
         theme: ThemeData(  //This is all styling — colors, buttons, text, background color.
           brightness: Brightness.light,
           primaryColor: const Color(0xFF6FAF98),

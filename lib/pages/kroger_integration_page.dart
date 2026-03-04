@@ -10,10 +10,10 @@ class KrogerIntegrationPage extends StatefulWidget {
   final List<String> ingredients; // Your meal plan ingredients
 
   const KrogerIntegrationPage({
-    Key? key,
+    super.key,
     required this.krogerService,
     required this.ingredients,
-  }) : super(key: key);
+  });
 
   @override
   State<KrogerIntegrationPage> createState() => _KrogerIntegrationPageState();
@@ -21,7 +21,7 @@ class KrogerIntegrationPage extends StatefulWidget {
 
 class _KrogerIntegrationPageState extends State<KrogerIntegrationPage> {
   KrogerStore? _selectedStore;
-  Map<String, KrogerProduct?> _matchedProducts = {};
+  final Map<String, KrogerProduct?> _matchedProducts = {};
   bool _isLoading = false;
 
   @override
@@ -298,10 +298,10 @@ class KrogerOAuthPage extends StatefulWidget {
   final VoidCallback onSuccess;
 
   const KrogerOAuthPage({
-    Key? key,
+    super.key,
     required this.krogerService,
     required this.onSuccess,
-  }) : super(key: key);
+  });
 
   @override
   State<KrogerOAuthPage> createState() => _KrogerOAuthPageState();
