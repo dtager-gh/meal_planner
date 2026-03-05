@@ -4,9 +4,9 @@ import '../services/kroger_api_service.dart';
 import '../pages/kroger_integration_page.dart';
 import '../pages/product_picker_page.dart';
 import '../config/kroger_config.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-// This screen expects a shopping list sent into it.
-// It's a StatefulWidget because items can be checked/unchecked.
+
 class ShoppingListPage extends StatefulWidget {
   final Map<String, int> shoppingList;
   const ShoppingListPage({super.key, required this.shoppingList});
@@ -15,9 +15,10 @@ class ShoppingListPage extends StatefulWidget {
   State<ShoppingListPage> createState() => _ShoppingListPageState();
 }
 
-// This stores whether each item should be included in the Kroger cart
+
 class _ShoppingListPageState extends State<ShoppingListPage> {
   late Map<String, bool> _includeInCart;
+  late Map<String, int> _cartQty;
 
   KrogerStore? _krogerStore;
   late final KrogerApiService _krogerApi;
@@ -28,14 +29,37 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
 
     _includeInCart = {for (var key in widget.shoppingList.keys) key: true};
 
+    _cartQty = Map<String, int>.from(widget.shoppingList);
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
+    if (uid == null) {
+      throw Exception('No logged-in user. Cannot create KrogerApiService without userKey.');
+    }
+
     _krogerApi = KrogerApiService(
+      userKey: uid, // ✅ UNIQUE per app user
       clientId: KrogerConfig.clientId,
       clientSecret: KrogerConfig.clientSecret,
       redirectUri: KrogerConfig.redirectUri,
     );
   }
 
-  // Step 3: Connect to Kroger + pick store (returns KrogerStore)
+  void _incQty(String ingredient) {
+    setState(() {
+      final current = _cartQty[ingredient] ?? 1;
+      _cartQty[ingredient] = current + 1;
+    });
+  }
+
+  void _decQty(String ingredient) {
+    setState(() {
+      final current = _cartQty[ingredient] ?? 1;
+      final next = current - 1;
+      _cartQty[ingredient] = next < 1 ? 1 : next; // clamp to 1
+    });
+  }
+
   Future<void> _openKrogerIntegration() async {
     final ingredients = widget.shoppingList.entries
         .where((e) => (_includeInCart[e.key] ?? true) == true)
@@ -71,7 +95,6 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     }
   }
 
-  // Step 5 (part): Choose a product for a given ingredient (stores UPC in Hive)
   Future<void> _chooseProduct(String ingredient) async {
     if (_krogerStore == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -80,7 +103,6 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
       return;
     }
 
-    // Ensure token is available (should be after auth, but safe)
     await _krogerApi.loadStoredToken();
 
     final picked = await Navigator.push<KrogerProduct>(
@@ -97,7 +119,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     if (picked == null) return;
 
     final box = Hive.box<String>('krogerSelectedUpcByIngredient');
-    await box.put(ingredient, picked.upc);
+    await box.put('${_krogerApi.userKey}|$ingredient', picked.upc);
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -105,7 +127,6 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     );
   }
 
-  // Step 5 (part): Add ONLY included + selected items to cart
   Future<void> _addSelectedToKrogerCart() async {
     if (_krogerStore == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -130,16 +151,16 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
 
     for (final entry in widget.shoppingList.entries) {
       final ingredient = entry.key;
-      final qty = entry.value;
+      final qty = _cartQty[ingredient] ?? entry.value;
 
-      // Must be included
+
       if ((_includeInCart[ingredient] ?? true) != true) {
         skipped++;
         continue;
       }
 
-      // Must have a chosen UPC
-      final upc = box.get(ingredient);
+
+      final upc = box.get('${_krogerApi.userKey}|$ingredient');
       if (upc == null || upc.isEmpty) {
         skipped++;
         continue;
@@ -168,7 +189,6 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Enable "Add Selected" only if at least one included item has a selected UPC
     final selectedBox = Hive.box<String>('krogerSelectedUpcByIngredient');
     final hasAtLeastOneSelected = widget.shoppingList.keys.any((k) {
       final included = (_includeInCart[k] ?? true) == true;
@@ -176,7 +196,6 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
       return included && upc != null && upc.isNotEmpty;
     });
 
-    // Enable "Connect" only if at least one item is included
     final hasIncludedItems = widget.shoppingList.keys
         .any((k) => (_includeInCart[k] ?? true) == true);
 
@@ -199,7 +218,6 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
       ),
       body: Column(
         children: [
-          // Scrollable list of shopping items
           Expanded(
             child: Center(
               child: Container(
@@ -208,7 +226,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                   padding: const EdgeInsets.all(16),
                   children: widget.shoppingList.entries.map((entry) {
                     final ingredient = entry.key;
-                    final qty = entry.value;
+                    final qty = _cartQty[ingredient] ?? entry.value;
 
                     final upc = selectedBox.get(ingredient);
                     final included = _includeInCart[ingredient] ?? true;
@@ -230,9 +248,32 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Quantity: $qty',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text(
+                                  'Qty:',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(width: 8),
+                                IconButton(
+                                  icon: const Icon(Icons.remove_circle_outline),
+                                  onPressed: included ? () => _decQty(ingredient) : null,
+                                  tooltip: 'Decrease',
+                                ),
+                                Text(
+                                  '$qty',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.add_circle_outline),
+                                  onPressed: included ? () => _incQty(ingredient) : null,
+                                  tooltip: 'Increase',
+                                ),
+                              ],
                             ),
                             if (upc != null && upc.isNotEmpty)
                               Text(
@@ -253,7 +294,6 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
             ),
           ),
 
-          // Bottom action bar
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(

@@ -8,7 +8,7 @@ class KrogerApiService {
   static const String _baseUrl = 'https://api.kroger.com/v1';
   static const String _authUrl = 'https://api.kroger.com/v1/connect/oauth2';
 
-  // Replace these with your actual credentials
+  final String userKey;
   final String clientId;
   final String clientSecret;
   final String redirectUri;
@@ -16,8 +16,12 @@ class KrogerApiService {
   final _storage = const FlutterSecureStorage();
   String? _accessToken;
   DateTime? _tokenExpiry;
+  String get _kAccessTokenKey => 'kroger_${userKey}_access_token';
+  String get _kRefreshTokenKey => 'kroger_${userKey}_refresh_token';
+  String get _kTokenExpiryKey => 'kroger_${userKey}_token_expiry';
 
   KrogerApiService({
+    required this.userKey,
     required this.clientId,
     required this.clientSecret,
     required this.redirectUri,
@@ -64,11 +68,12 @@ class KrogerApiService {
         _tokenExpiry = DateTime.now().add(Duration(seconds: expiresIn));
 
         // Store tokens securely
-        await _storage.write(key: 'kroger_access_token', value: _accessToken);
-        await _storage.write(key: 'kroger_token_expiry', value: _tokenExpiry!.toIso8601String());
+        await _storage.write(key: _kAccessTokenKey, value: _accessToken);
+        await _storage.write(key: _kTokenExpiryKey, value: _tokenExpiry!.toIso8601String());
 
-        if (data['refresh_token'] != null) {
-          await _storage.write(key: 'kroger_refresh_token', value: data['refresh_token']);
+        final refresh = data['refresh_token'];
+        if (refresh != null && refresh is String && refresh.isNotEmpty) {
+          await _storage.write(key: _kRefreshTokenKey, value: refresh);
         }
 
         return true;
@@ -83,8 +88,8 @@ class KrogerApiService {
   // Load stored token
   Future<bool> loadStoredToken() async {
     try {
-      _accessToken = await _storage.read(key: 'kroger_access_token');
-      final expiryStr = await _storage.read(key: 'kroger_token_expiry');
+      _accessToken = await _storage.read(key: _kAccessTokenKey);
+      final expiryStr = await _storage.read(key: _kTokenExpiryKey);
 
       if (_accessToken != null && expiryStr != null) {
         _tokenExpiry = DateTime.parse(expiryStr);
@@ -107,7 +112,7 @@ class KrogerApiService {
   // Refresh access token
   Future<bool> _refreshToken() async {
     try {
-      final refreshToken = await _storage.read(key: 'kroger_refresh_token');
+      final refreshToken = await _storage.read(key: _kRefreshTokenKey);
       if (refreshToken == null) return false;
 
       final credentials = base64Encode(utf8.encode('$clientId:$clientSecret'));
@@ -130,8 +135,13 @@ class KrogerApiService {
         final expiresIn = data['expires_in'] as int;
         _tokenExpiry = DateTime.now().add(Duration(seconds: expiresIn));
 
-        await _storage.write(key: 'kroger_access_token', value: _accessToken);
-        await _storage.write(key: 'kroger_token_expiry', value: _tokenExpiry!.toIso8601String());
+        await _storage.write(key: _kAccessTokenKey, value: _accessToken);
+        await _storage.write(key: _kTokenExpiryKey, value: _tokenExpiry!.toIso8601String());
+
+        final newRefresh = data['refresh_token'];
+        if (newRefresh != null && newRefresh is String && newRefresh.isNotEmpty) {
+          await _storage.write(key: _kRefreshTokenKey, value: newRefresh);
+        }
 
         return true;
       }
@@ -255,9 +265,9 @@ class KrogerApiService {
   Future<void> logout() async {
     _accessToken = null;
     _tokenExpiry = null;
-    await _storage.delete(key: 'kroger_access_token');
-    await _storage.delete(key: 'kroger_token_expiry');
-    await _storage.delete(key: 'kroger_refresh_token');
+    await _storage.delete(key: _kAccessTokenKey);
+    await _storage.delete(key: _kTokenExpiryKey);
+    await _storage.delete(key: _kRefreshTokenKey);
   }
 
   bool get isAuthenticated => _accessToken != null;
