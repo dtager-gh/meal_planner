@@ -4,10 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import '../services/kroger_api_service.dart';
 
-// Main integration page
+// Main integration page (Step 4: connect + choose store, no auto-matching, no add-all)
 class KrogerIntegrationPage extends StatefulWidget {
   final KrogerApiService krogerService;
-  final List<String> ingredients; // Your meal plan ingredients
+
+  // Keeping this param so you don't have to refactor call sites yet,
+  // but Step 4 no longer uses it.
+  final List<String> ingredients;
 
   const KrogerIntegrationPage({
     super.key,
@@ -21,7 +24,6 @@ class KrogerIntegrationPage extends StatefulWidget {
 
 class _KrogerIntegrationPageState extends State<KrogerIntegrationPage> {
   KrogerStore? _selectedStore;
-  final Map<String, KrogerProduct?> _matchedProducts = {};
   bool _isLoading = false;
 
   @override
@@ -58,18 +60,23 @@ class _KrogerIntegrationPageState extends State<KrogerIntegrationPage> {
     setState(() => _isLoading = true);
     try {
       // TODO: Get user's actual location using geolocator package
-      // For now using Atlanta coordinates as example
+// Using North Augusta, SC coordinates
       final stores = await widget.krogerService.searchStores(
-        latitude: 33.7490,
-        longitude: -84.3880,
-        radiusMiles: 10,
+        latitude: 33.5018,
+        longitude: -81.9651,
+        radiusMiles: 20,
       );
 
-      if (stores.isNotEmpty && mounted) {
+      if (!mounted) return;
+
+      if (stores.isNotEmpty) {
         setState(() {
           _selectedStore = stores.first;
         });
-        _searchForIngredients();
+      } else {
+        setState(() {
+          _selectedStore = null;
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -78,64 +85,7 @@ class _KrogerIntegrationPageState extends State<KrogerIntegrationPage> {
         );
       }
     } finally {
-      setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _searchForIngredients() async {
-    if (_selectedStore == null) return;
-
-    setState(() => _isLoading = true);
-
-    for (final ingredient in widget.ingredients) {
-      try {
-        final products = await widget.krogerService.searchProducts(
-          searchTerm: ingredient,
-          locationId: _selectedStore!.locationId,
-          limit: 5,
-        );
-
-        setState(() {
-          _matchedProducts[ingredient] = products.isNotEmpty ? products.first : null;
-        });
-      } catch (e) {
-        print('Error searching for $ingredient: $e');
-      }
-    }
-
-    setState(() => _isLoading = false);
-  }
-
-  Future<void> _addAllToCart() async {
-    int successCount = 0;
-    int failCount = 0;
-
-    for (final entry in _matchedProducts.entries) {
-      if (entry.value != null) {
-        try {
-          final success = await widget.krogerService.addToCart(
-            productId: entry.value!.upc,
-            quantity: 1,
-          );
-          if (success) {
-            successCount++;
-          } else {
-            failCount++;
-          }
-        } catch (e) {
-          failCount++;
-          print('Error adding ${entry.key} to cart: $e');
-        }
-      }
-    }
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Added $successCount items to cart${failCount > 0 ? ", $failCount failed" : ""}'),
-          backgroundColor: failCount > 0 ? Colors.orange : Colors.green,
-        ),
-      );
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -143,13 +93,13 @@ class _KrogerIntegrationPageState extends State<KrogerIntegrationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Kroger Shopping Cart'),
+        title: const Text('Kroger Connection'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
               await widget.krogerService.logout();
-              _startOAuth();
+              if (mounted) _startOAuth();
             },
           ),
         ],
@@ -172,7 +122,8 @@ class _KrogerIntegrationPageState extends State<KrogerIntegrationPage> {
                       children: [
                         Text(
                           _selectedStore!.name,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style:
+                          const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         Text(
                           '${_selectedStore!.address}, ${_selectedStore!.city}',
@@ -187,101 +138,42 @@ class _KrogerIntegrationPageState extends State<KrogerIntegrationPage> {
                     },
                     child: const Text('Change'),
                   ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context, _selectedStore);
+                    },
+                    child: const Text('Use this store'),
+                  ),
+                ],
+              ),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  const Text(
+                    'No store found nearby.',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry'),
+                    onPressed: _loadNearbyStores,
+                  ),
                 ],
               ),
             ),
-          Expanded(
-            child: _matchedProducts.isEmpty
-                ? const Center(child: Text('No products matched'))
-                : ListView.builder(
-              itemCount: _matchedProducts.length,
-              itemBuilder: (context, index) {
-                final entry = _matchedProducts.entries.elementAt(index);
-                final ingredient = entry.key;
-                final product = entry.value;
 
-                return Card(
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  child: ListTile(
-                    leading: product?.imageUrl != null
-                        ? Image.network(
-                      product!.imageUrl!,
-                      width: 50,
-                      height: 50,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
-                      const Icon(Icons.image_not_supported),
-                    )
-                        : const Icon(Icons.shopping_basket),
-                    title: Text(ingredient),
-                    subtitle: product != null
-                        ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          product.description,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          '${product.brand} - ${product.size}',
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                        if (product.price != null)
-                          Text(
-                            '\$${product.price!.toStringAsFixed(2)}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green,
-                            ),
-                          ),
-                      ],
-                    )
-                        : const Text('No match found'),
-                    trailing: product != null
-                        ? IconButton(
-                      icon: const Icon(Icons.add_shopping_cart),
-                      onPressed: () async {
-                        final success = await widget.krogerService.addToCart(
-                          productId: product.upc,
-                          quantity: 1,
-                        );
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                success
-                                    ? 'Added to cart'
-                                    : 'Failed to add to cart',
-                              ),
-                            ),
-                          );
-                        }
-                      },
-                    )
-                        : const Icon(Icons.error_outline),
-                  ),
-                );
-              },
-            ),
-          ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.shopping_cart),
-                  label: const Text('Add All to Kroger Cart'),
-                  onPressed: _matchedProducts.values.any((p) => p != null)
-                      ? _addAllToCart
-                      : null,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
+          const Expanded(
+            child: Center(
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: Text(
+                  'Connected to Kroger.\n\nNext, you will choose a product for each ingredient from your shopping list.',
+                  textAlign: TextAlign.center,
                 ),
               ),
             ),
@@ -292,7 +184,7 @@ class _KrogerIntegrationPageState extends State<KrogerIntegrationPage> {
   }
 }
 
-// OAuth WebView Page
+// OAuth WebView Page (unchanged)
 class KrogerOAuthPage extends StatefulWidget {
   final KrogerApiService krogerService;
   final VoidCallback onSuccess;
@@ -329,7 +221,6 @@ class _KrogerOAuthPageState extends State<KrogerOAuthPage> {
             setState(() => _isLoading = false);
           },
           onNavigationRequest: (request) {
-            // Check if this is the redirect with the authorization code
             if (request.url.startsWith(widget.krogerService.redirectUri)) {
               _handleRedirect(request.url);
               return NavigationDecision.prevent;

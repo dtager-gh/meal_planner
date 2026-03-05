@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:meal_planner/pages/auth_gate.dart';
-import 'package:meal_planner/pages/home_page.dart';
 import 'package:meal_planner/pages/signup_page.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
-import 'auth_gate.dart';
+
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});

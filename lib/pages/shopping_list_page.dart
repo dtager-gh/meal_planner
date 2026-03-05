@@ -3,9 +3,6 @@ import '../services/kroger_api_service.dart';
 import '../pages/kroger_integration_page.dart';
 import '../config/kroger_config.dart';
 
-
-//This screen expects a shopping list sent into it.
-//It's a StatefulWidget because items can be checked/unchecked.
 class ShoppingListPage extends StatefulWidget {
   final Map<String, int> shoppingList;
   const ShoppingListPage({super.key, required this.shoppingList});
@@ -14,43 +11,34 @@ class ShoppingListPage extends StatefulWidget {
   State<ShoppingListPage> createState() => _ShoppingListPageState();
 }
 
-
-//This creates a second map to store whether each item has been purchased
 class _ShoppingListPageState extends State<ShoppingListPage> {
-  late Map<String, bool> _purchased;
+  late Map<String, bool> _includeInCart;
 
-
-  //This runs one time only when the page opens.
-  // It creates a Map
-  //All checkboxes start unchecked
   @override
   void initState() {
     super.initState();
-
-    _purchased = {for (var key in widget.shoppingList.keys) key: false};
+    _includeInCart = {for (var key in widget.shoppingList.keys) key: true};
   }
 
-
-  // NEW: Navigate to Kroger integration
   void _openKrogerIntegration() {
-    if (widget.shoppingList.isEmpty) {
+    final ingredients = widget.shoppingList.entries
+        .where((e) => (_includeInCart[e.key] ?? true) == true)
+        .map((e) => e.key)
+        .toList();
+
+    if (ingredients.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Shopping list is empty')),
+        const SnackBar(content: Text('No items selected to add')),
       );
       return;
     }
 
-    // Convert your Map<String, int> to List<String> for Kroger
-    final ingredients = widget.shoppingList.keys.toList();
-
-    // Initialize Kroger service
     final krogerApi = KrogerApiService(
       clientId: KrogerConfig.clientId,
       clientSecret: KrogerConfig.clientSecret,
       redirectUri: KrogerConfig.redirectUri,
     );
 
-    // Navigate to Kroger page
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -62,16 +50,17 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
+    final hasIncludedItems = widget.shoppingList.keys
+        .any((k) => (_includeInCart[k] ?? true) == true);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Shopping List'),
       ),
       body: Column(
         children: [
-          // Scrollable list of shopping items
           Expanded(
             child: Center(
               child: Container(
@@ -88,10 +77,10 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                         'Quantity: ${entry.value}',
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
-                      value: _purchased[entry.key],
+                      value: _includeInCart[entry.key] ?? true,
                       onChanged: (bool? value) {
                         setState(() {
-                          _purchased[entry.key] = value ?? false;
+                          _includeInCart[entry.key] = value ?? true;
                         });
                       },
                     );
@@ -101,7 +90,6 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
             ),
           ),
 
-          // Kroger button at the bottom
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -130,7 +118,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  onPressed: widget.shoppingList.isEmpty ? null : _openKrogerIntegration,
+                  onPressed: hasIncludedItems ? _openKrogerIntegration : null,
                 ),
               ),
             ),
