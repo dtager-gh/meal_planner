@@ -38,7 +38,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     }
 
     _krogerApi = KrogerApiService(
-      userKey: uid, // ✅ UNIQUE per app user
+      userKey: uid,
       clientId: KrogerConfig.clientId,
       clientSecret: KrogerConfig.clientSecret,
       redirectUri: KrogerConfig.redirectUri,

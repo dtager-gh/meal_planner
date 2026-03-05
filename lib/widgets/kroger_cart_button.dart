@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../services/kroger_api_service.dart';
 import '../config/kroger_config.dart';
 import '../pages/kroger_integration_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class KrogerCartButton extends StatelessWidget {
   final List<String> shoppingListItems;
@@ -32,7 +33,18 @@ class KrogerCartButton extends StatelessWidget {
 
   void _openKrogerIntegration(BuildContext context) {
     // Initialize Kroger service
+    final user = FirebaseAuth.instance.currentUser;
+    final uid = user?.uid;
+
+    if (uid == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You must be signed in to connect to Kroger.')),
+      );
+      return;
+    }
+
     final krogerApi = KrogerApiService(
+      userKey: uid,
       clientId: KrogerConfig.clientId,
       clientSecret: KrogerConfig.clientSecret,
       redirectUri: KrogerConfig.redirectUri,
