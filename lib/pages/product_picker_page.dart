@@ -38,7 +38,7 @@ class _ProductPickerPageState extends State<ProductPickerPage> {
       final results = await widget.krogerService.searchProducts(
         searchTerm: widget.ingredient,
         locationId: widget.locationId,
-        limit: 20,
+        limit: 25,
       );
       setState(() => _products = results);
     } catch (e) {
@@ -56,6 +56,8 @@ class _ProductPickerPageState extends State<ProductPickerPage> {
           ? const Center(child: CircularProgressIndicator())
           : _error != null
           ? Center(child: Text('Error: $_error'))
+          : _products.isEmpty
+          ? const Center(child: Text('No products found'))
           : ListView.builder(
         itemCount: _products.length,
         itemBuilder: (context, i) {
@@ -83,11 +85,7 @@ class _ProductPickerPageState extends State<ProductPickerPage> {
                         style: const TextStyle(fontWeight: FontWeight.bold)),
                 ],
               ),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                // Return selected product to caller
-                Navigator.pop(context, p);
-              },
+              onTap: () => Navigator.pop(context, p), // return chosen product
             ),
           );
         },
