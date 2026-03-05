@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'meal_plan_page.dart';
 import 'edit_food_page.dart';
-import '../services/meal_generator.dart';
 import 'shopping_list_page.dart';
 import '../services/shopping_list.dart';
 import '../models/week_plan.dart';
@@ -257,8 +256,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                   hasShoppingList = true;
                                 });
 
-                                Hive.box<String>('mealPlanBox')
-                                    .put('currentPlan', jsonEncode(plan.toJson()));
+                                Hive.box<String>('mealPlanBox').put('currentPlan', jsonEncode(plan.toJson()));
                               } catch (e) {
                                 if (!mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(

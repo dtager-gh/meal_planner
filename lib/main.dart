@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'pages/home_page.dart';
 import 'pages/login_page.dart';
-import 'services/hive_loader.dart';
 import 'package:provider/provider.dart';
 import 'services/auth_service.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -17,19 +16,11 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Start Hive (your local storage system).
+
   await Hive.initFlutter();
 
-  // Open your "boxes" — these work like small folders that store data on the phone.
   await Hive.openBox<String>('mealPlanBox');
-  await Hive.openBox<String>('meats');
-  await Hive.openBox<String>('veggies');
-  await Hive.openBox<String>('salads');
   await Hive.openBox<String>('krogerSelectedUpcByUid');
-  await Hive.openBox<List>('krogerFavoritesByIngredient');
-
-  // Add default foods to Hive the FIRST time the app runs.
-  await loadDefaultFoods();
 
   // Initialize AuthService and load any persisted token
   final authService = AuthService();
