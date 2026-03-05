@@ -9,6 +9,7 @@ import 'package:hive/hive.dart';
 import 'dart:convert';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
+import '../services/meal_generator_firestore.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -244,13 +245,26 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                             gradient: const LinearGradient(
                               colors: [Colors.orangeAccent, Colors.deepOrange],
                             ),
-                            onTap: () {
-                              final plan = generateWeekPlan();
-                              setState(() {
-                                currentPlan = plan;
-                                hasShoppingList = true;
-                              });
-                              Hive.box<String>('mealPlanBox').put('currentPlan', jsonEncode(plan.toJson()));
+                            onTap: () async {
+                              try {
+                                final generator = FirestoreMealGenerator();
+                                final plan = await generator.generateWeekPlan();
+
+                                if (!mounted) return;
+
+                                setState(() {
+                                  currentPlan = plan;
+                                  hasShoppingList = true;
+                                });
+
+                                Hive.box<String>('mealPlanBox')
+                                    .put('currentPlan', jsonEncode(plan.toJson()));
+                              } catch (e) {
+                                if (!mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(e.toString())),
+                                );
+                              }
                             },
                           ),
 

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import '../services/user_food_service.dart';
 
-// Screen to edit meats, vegetables, and salads
 class EditFoodPage extends StatefulWidget {
   const EditFoodPage({super.key});
 
@@ -10,181 +9,255 @@ class EditFoodPage extends StatefulWidget {
 }
 
 class _EditFoodPageState extends State<EditFoodPage> {
-  // Which category is selected in the dropdown
   String category = 'Meat';
-
-  // Text controller for the input box
   final TextEditingController controller = TextEditingController();
 
-  // Returns the correct Hive box depending on selected category
-  Box<String> getBox() {
-    switch (category) {
-      case 'Meat':
-        return Hive.box<String>('meats');
-      case 'Vegetable':
-        return Hive.box<String>('veggies');
-      case 'Salad':
-        return Hive.box<String>('salads');
-      default:
-        return Hive.box<String>('meats');
+  final UserFoodService foodService = UserFoodService();
+
+  bool loading = true;
+  bool saving = false;
+  List<Map<String, dynamic>> foods = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFoods();
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadFoods() async {
+    setState(() => loading = true);
+    try {
+      foods = await foodService.getFoods(category);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load foods: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => loading = false);
     }
   }
 
-  // Add a new item to the Hive box
-  void addItem() {
+  Future<void> _addItem() async {
     final text = controller.text.trim();
-    if (text.isEmpty) return; // Don't add empty text
+    if (text.isEmpty) return;
 
-    final box = getBox();
-    box.add(text); // Add new item to Hive
-    controller.clear(); // Clear input field
+    setState(() => saving = true);
+    try {
+      await foodService.addFood(category, text);
+      controller.clear();
 
-    // Show message at bottom of screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$text added to $category list.')),
-    );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$text added to $category list.')),
+        );
+      }
+
+      await _loadFoods();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to add item: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => saving = false);
+    }
   }
 
-  // Edit an existing item
-  void editItem(Box box, int index, String currentValue) {
-    // Pre-fill the edit box with old value
+  Future<void> _editItem(String id, String currentValue) async {
     final editController = TextEditingController(text: currentValue);
 
-    // Show pop-up to edit
-    showDialog(
+    await showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text("Edit Item"),
         content: TextField(
           controller: editController,
           decoration: const InputDecoration(border: OutlineInputBorder()),
+          autofocus: true,
         ),
         actions: [
-          // Cancel button closes dialog
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text("Cancel"),
           ),
-
-          // Save button updates the Hive item
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               final newText = editController.text.trim();
-              if (newText.isNotEmpty) {
-                box.putAt(index, newText); // Overwrite value
+              if (newText.isNotEmpty && newText != currentValue) {
+                Navigator.pop(context);
+                setState(() => saving = true);
+                try {
+                  await foodService.updateFoodName(id, newText);
+                  await _loadFoods();
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to save: $e')),
+                    );
+                  }
+                } finally {
+                  if (mounted) setState(() => saving = false);
+                }
+              } else {
+                Navigator.pop(context);
               }
-              Navigator.pop(context);
             },
             child: const Text("Save"),
-          )
+          ),
         ],
       ),
     );
   }
 
-  // Remove an item from the list
-  void deleteItem(Box box, int index) {
-    box.deleteAt(index);
+  Future<void> _deleteItem(String id) async {
+    setState(() => saving = true);
+    try {
+      await foodService.deleteFood(id);
+      await _loadFoods();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => saving = false);
+    }
   }
 
+  Future<void> _toggleEnabled(String id, bool enabled) async {
+    // Optimistic UI (feels instant)
+    final idx = foods.indexWhere((f) => f['id'] == id);
+    if (idx != -1) {
+      setState(() {
+        foods[idx]['enabled'] = enabled;
+      });
+    }
+
+    try {
+      await foodService.setEnabled(id, enabled);
+    } catch (e) {
+      // rollback
+      if (idx != -1) {
+        setState(() {
+          foods[idx]['enabled'] = !enabled;
+        });
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update: $e')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Get the appropriate box based on dropdown selection
-    final box = getBox();
-
     return Scaffold(
-      appBar: AppBar(title: const Text("Manage Food Items")),
+      appBar: AppBar(
+        title: const Text("Manage Food Items"),
+      ),
       body: Center(
         child: Container(
-          constraints: BoxConstraints(maxWidth: 600),
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              children: [
+          constraints: const BoxConstraints(maxWidth: 600),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              DropdownButton<String>(
+                value: category,
+                items: const [
+                  DropdownMenuItem(value: 'Meat', child: Text('Meat')),
+                  DropdownMenuItem(value: 'Vegetable', child: Text('Vegetable')),
+                  DropdownMenuItem(value: 'Salad', child: Text('Salad')),
+                ],
+                onChanged: saving
+                    ? null
+                    : (value) async {
+                  if (value == null) return;
+                  setState(() => category = value);
+                  await _loadFoods();
+                },
+              ),
+              TextField(
+                controller: controller,
+                enabled: !saving,
+                decoration: const InputDecoration(
+                  labelText: 'Enter food name',
+                  border: OutlineInputBorder(),
+                ),
+                onSubmitted: (_) => _addItem(),
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: saving ? null : _addItem,
+                child: saving ? const Text("Working...") : const Text("Add"),
+              ),
+              const SizedBox(height: 20),
+              const Divider(),
+              Text(
+                "$category List",
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
 
-                // Dropdown for selecting category
-                DropdownButton<String>(
-                  value: category,
-                  items: const [
-                    DropdownMenuItem(value: 'Meat', child: Text('Meat')),
-                    DropdownMenuItem(value: 'Vegetable', child: Text('Vegetable')),
-                    DropdownMenuItem(value: 'Salad', child: Text('Salad')),
-                  ],
-                  onChanged: (value) {
-                    setState(() => category = value!);
+              Expanded(
+                child: loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : foods.isEmpty
+                    ? const Center(child: Text("No items yet. Add some above."))
+                    : ListView.builder(
+                  itemCount: foods.length,
+                  itemBuilder: (context, index) {
+                    final item = foods[index];
+                    final id = item['id'] as String;
+                    final name = (item['name'] ?? '') as String;
+                    final enabled = (item['enabled'] ?? true) as bool;
+
+                    return ListTile(
+                      leading: Switch(
+                        value: enabled,
+                        onChanged: saving
+                            ? null
+                            : (v) => _toggleEnabled(id, v),
+                      ),
+                      title: Text(
+                        name,
+                        style: TextStyle(
+                          decoration: enabled
+                              ? null
+                              : TextDecoration.lineThrough,
+                        ),
+                      ),
+                      subtitle: enabled
+                          ? const Text("Included in random selection")
+                          : const Text("Excluded from random selection"),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit),
+                            onPressed: saving ? null : () => _editItem(id, name),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: saving ? null : () => _deleteItem(id),
+                          ),
+                        ],
+                      ),
+                    );
                   },
                 ),
-
-                // Input for adding new food item
-                TextField(
-                  controller: controller,
-                  decoration: const InputDecoration(
-                    labelText: 'Enter food name',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-
-                const SizedBox(height: 10),
-
-                // Add button
-                ElevatedButton(
-                  onPressed: addItem,
-                  child: const Text("Add"),
-                ),
-
-
-                const SizedBox(height: 20),
-                const Divider(),
-
-
-                // Title above the list
-                Text(
-                  "$category List",
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-
-                const SizedBox(height: 10),
-
-                // List of items (auto-updates because of ValueListenableBuilder)
-                Expanded(
-                  child: ValueListenableBuilder(
-                    valueListenable: box.listenable(),
-                    builder: (context, Box<String> b, _) {
-                      return ListView.builder(
-                        itemCount: b.length,
-                        itemBuilder: (context, index) {
-                          final item = b.getAt(index) ?? '';
-
-                          return ListTile(
-                            title: Text(item),
-
-                            // Edit + Delete buttons
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-
-                                // Edit button
-                                IconButton(
-                                  icon: const Icon(Icons.edit),
-                                  onPressed: () => editItem(b, index, item),
-                                ),
-
-                                // Delete button
-                                IconButton(
-                                  icon: const Icon(Icons.delete, color: Colors.red),
-                                  onPressed: () => deleteItem(b, index),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                )
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
