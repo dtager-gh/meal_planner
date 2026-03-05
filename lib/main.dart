@@ -25,9 +25,8 @@ void main() async {
   await Hive.openBox<String>('meats');
   await Hive.openBox<String>('veggies');
   await Hive.openBox<String>('salads');
-  await Hive.openBox<String>('krogerSelectedUpcByIngredient');
+  await Hive.openBox<String>('krogerSelectedUpcByUid');
   await Hive.openBox<List>('krogerFavoritesByIngredient');
-  await Hive.openBox<String>('krogerSelectedUpcByIngredient');
 
   // Add default foods to Hive the FIRST time the app runs.
   await loadDefaultFoods();

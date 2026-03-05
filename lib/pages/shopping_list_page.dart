@@ -120,7 +120,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
 
     if (picked == null) return;
 
-    final box = Hive.box<String>('krogerSelectedUpcByIngredient');
+    final box = Hive.box<String>('krogerSelectedUpcByUid');
     await box.put('${_krogerApi.userKey}|$ingredient', picked.upc);
 
     if (!mounted) return;
@@ -145,7 +145,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
       return;
     }
 
-    final box = Hive.box<String>('krogerSelectedUpcByIngredient');
+    final box = Hive.box<String>('krogerSelectedUpcByUid');
 
     int added = 0;
     int skipped = 0;
@@ -191,7 +191,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final selectedBox = Hive.box('krogerSelectedUpcByIngredient');
+    final selectedBox = Hive.box<String>('krogerSelectedUpcByUid');
     final hasAtLeastOneSelected = widget.shoppingList.keys.any((k) {
       final included = (_includeInCart[k] ?? true) == true;
       final upc = selectedBox.get(_upcKey(k));
