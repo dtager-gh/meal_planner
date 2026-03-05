@@ -209,17 +209,16 @@ class _KrogerOAuthPageState extends State<KrogerOAuthPage> {
     _initializeWebView();
   }
 
-  void _initializeWebView() {
+  Future<void> _initializeWebView() async {
+    final cookieManager = WebViewCookieManager();
+    await cookieManager.clearCookies();
+
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
         NavigationDelegate(
-          onPageStarted: (url) {
-            setState(() => _isLoading = true);
-          },
-          onPageFinished: (url) {
-            setState(() => _isLoading = false);
-          },
+          onPageStarted: (url) => setState(() => _isLoading = true),
+          onPageFinished: (url) => setState(() => _isLoading = false),
           onNavigationRequest: (request) {
             if (request.url.startsWith(widget.krogerService.redirectUri)) {
               _handleRedirect(request.url);

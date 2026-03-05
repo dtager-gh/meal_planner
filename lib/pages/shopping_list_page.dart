@@ -45,6 +45,8 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     );
   }
 
+  String _upcKey(String ingredient) => '${_krogerApi.userKey}|$ingredient';
+
   void _incQty(String ingredient) {
     setState(() {
       final current = _cartQty[ingredient] ?? 1;
@@ -189,10 +191,10 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final selectedBox = Hive.box<String>('krogerSelectedUpcByIngredient');
+    final selectedBox = Hive.box('krogerSelectedUpcByIngredient');
     final hasAtLeastOneSelected = widget.shoppingList.keys.any((k) {
       final included = (_includeInCart[k] ?? true) == true;
-      final upc = selectedBox.get(k);
+      final upc = selectedBox.get(_upcKey(k));
       return included && upc != null && upc.isNotEmpty;
     });
 
@@ -228,7 +230,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                     final ingredient = entry.key;
                     final qty = _cartQty[ingredient] ?? entry.value;
 
-                    final upc = selectedBox.get(ingredient);
+                    final upc = selectedBox.get(_upcKey(ingredient));
                     final included = _includeInCart[ingredient] ?? true;
 
                     return Card(
